@@ -1,0 +1,20 @@
+# --- M0: dataset + local embedding (CPU) ---
+sentence-transformers>=3.0
+numpy>=1.26
+requests>=2.31
+python-dotenv>=1.0
+tqdm>=4.66
+
+# --- M1: evaluation + Supabase/Qdrant drivers ---
+pytrec_eval-terrier>=0.5.7   # prebuilt wheels (easier on Windows than pytrec_eval)
+qdrant-client>=1.9
+psycopg[binary]>=3.1
+
+# --- M3: Turso / libSQL driver ---
+libsql-client>=0.3           # Turso Cloud (remote hrana over HTTP)
+
+# --- M4: Cloudflare Vectorize uses `requests` REST — no extra driver ---
+
+# --- M5 recon / article figures (NOT needed for the 3-DB benchmark) ---
+faiss-cpu>=1.8               # scripts/scale_sweep.py (IndexHNSWFlat / IndexFlatIP)
+matplotlib>=3.8              # scripts/make_figures.py (article figures, PNG/SVG)

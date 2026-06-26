@@ -1,0 +1,28 @@
+{
+  "timestamp_jst": "2026-06-25 21:57:18",
+  "note_region_network": "Cloudflare Vectorize v2 REST (OAuth), client=JP, global edge (no single region)",
+  "args": {
+    "db": "cf",
+    "repeats": 3,
+    "warmup": 20,
+    "limit": 0,
+    "tune": false,
+    "ef": 200
+  },
+  "config": {
+    "dataset": "arguana",
+    "model": "sentence-transformers/all-MiniLM-L6-v2",
+    "dim": 384,
+    "max_seq_len": 256,
+    "metric": "cosine",
+    "top_k": 10,
+    "fetch_k": 30
+  },
+  "env": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.12.10"
+  },
+  "dbs_run": [
+    "cf"
+  ]
+}

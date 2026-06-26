@@ -1,0 +1,15 @@
+# qdrant_index_probe — N=8674 real vectors, default indexing_threshold question
+
+== A) DEFAULT config (== benchmark QdrantStore) ==
+   indexing_threshold (default) = 10000
+   ...indexed=0/8674 status=green segments=2
+   FINAL: points=8674 indexed=0 segments=2
+   => BRUTE-FORCE (no HNSW built; ANN Recall is exact-by-construction)  [threshold=10000, segment≈4337 < 10000]
+   sizes (default): {'vectors_size_bytes': 13323264, 'ram_usage_bytes': 0, 'disk_usage_bytes': 0}
+
+== B) indexing_threshold=1 (force HNSW) -> complete footprint ==
+   ...indexed=8448/8674 status=yellow segments=3
+   ...indexed=8674/8674 status=green segments=2
+   FINAL: points=8674 indexed=8674 segments=2 status=green
+   sizes WITH HNSW: {'vectors_size_bytes': 13323264, 'ram_usage_bytes': 0, 'disk_usage_bytes': 0}
+   raw vectors=13,323,264  vectors_size=13,323,264  ram=0  disk=0

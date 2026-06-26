@@ -1,0 +1,11 @@
+{
+  "fetched_at": "2026-06-25",
+  "org": "<your-org>",
+  "database": "arguana-bench",
+  "rows_read": 3131435,
+  "rows_written": 496276,
+  "storage_bytes": 8192,
+  "bytes_synced": 0,
+  "reads_free_per_mo": 500000000,
+  "writes_free_per_mo": 10000000
+}

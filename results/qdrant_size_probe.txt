@@ -1,0 +1,32 @@
+# qdrant_size_probe (LIVE collection) — https://<cluster-id>.us-west-2-0.aws.cloud.qdrant.io:6333
+# collection=arguana_sizeprobe
+
+loaded 8674 real corpus vectors, dim=384
+upserted 8674 vectors into live collection
+
+== 1. client.get_collection() — every field ==
+   CollectionInfo fields (9): ['status', 'optimizer_status', 'warnings', 'indexed_vectors_count', 'points_count', 'segments_count', 'config', 'payload_schema', 'update_queue']
+   byte-ish fields: NONE
+   points_count=8674 segments_count=2 indexed_vectors_count=0
+
+== 2. GET /collections/{name} (raw json) ==
+   status 200
+   byte-ish keys: ['.config.params.vectors.size = 384', '.config.params.on_disk_payload = True', '.config.hnsw_config.on_disk = False', '.config.optimizer_config.max_segment_size = None']
+
+== 3. GET /telemetry?details_level=10 (per-collection block) ==
+   status 200
+   collections.collections present: True, count=1
+   per-collection byte-ish keys: ['.collections[0].config.params.vectors.size = 384', '.collections[0].config.params.on_disk_payload = True', '.collections[0].config.hnsw_config.on_disk = False', '.collections[0].config.optimizer_config.max_segment_size = None', '.collections[0].shards[0].local.vectors_size_bytes = 13323264', '.collections[0].shards[0].local.payloads_size_bytes = 1110272', '.collections[0].shards[0].local.segments[0].info.vectors_size_bytes = 6684672', '.collections[0].shards[0].local.segments[0].info.payloads_size_bytes = 557056', '.collections[0].shards[0].local.segments[0].info.ram_usage_bytes = 0', '.collections[0].shards[0].local.segments[0].info.disk_usage_bytes = 0', '.collections[0].shards[0].local.segments[0].config.vector_data..size = 384', '.collections[0].shards[0].local.segments[1].info.vectors_size_bytes = 6638592', '.collections[0].shards[0].local.segments[1].info.payloads_size_bytes = 553216', '.collections[0].shards[0].local.segments[1].info.ram_usage_bytes = 0', '.collections[0].shards[0].local.segments[1].info.disk_usage_bytes = 0', '.collections[0].shards[0].local.segments[1].config.vector_data..size = 384']
+   node-level memory keys (NOT collection-attributable): ['.memory.active_bytes = 18616320', '.memory.allocated_bytes = 15856016', '.memory.metadata_bytes = 6234160', '.memory.resident_bytes = 48668672', '.memory.retained_bytes = 72859648']
+
+== 4. GET /metrics (Prometheus *_bytes) ==
+   status 200
+   *_bytes lines (5): ['memory_active_bytes 18653184', 'memory_allocated_bytes 15899152', 'memory_metadata_bytes 6234160', 'memory_resident_bytes 43487232', 'memory_retained_bytes 78041088']
+
+== node resident_bytes delta (node-level, NOT collection-attributable) ==
+   before=22,286,336 after=60,403,712 delta=38,117,376 bytes
+
+== CONCLUSION ==
+   A per-collection BYTE total was found on a surface: see byte-ish results above. If all four are NONE for collection scope, Qdrant exposes no per-collection size even on a LIVE, populated collection.
+
+[teardown] dropped probe collection
