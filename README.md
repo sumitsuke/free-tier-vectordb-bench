@@ -83,3 +83,10 @@ python -m scripts.consumption_report          # §7 消費メーター表
 **tauridev** — ソフトウェア開発／AIコード監査（Rust/Tauri＋React/TypeScript・ローカルファースト）。
 「AIに本番品質を出させ、AIの誤りに気づく検証規律」が専門。
 [ココナラ](https://coconala.com/users/6153961) ／ [getaxiom.dev](https://getaxiom.dev)
+
+## 設計・検証の記録（Sumitsuke Lab）
+
+このリポジトリの背景・検証環境・判定・最終検証日・失敗例は、Sumitsuke Lab の本家記事にまとめています。
+
+- 無料枠の実測シリーズ（ベクトル DB 4 本の横断ベンチ） → https://sumitsuke.jp/lab/
+- 受託（生成 AI コード・外注コードの点検と修理・テキスト完結） → https://sumitsuke.jp/works/repair/
