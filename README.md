@@ -90,3 +90,7 @@ python -m scripts.consumption_report          # §7 消費メーター表
 
 - 無料枠の実測シリーズ（ベクトル DB 4 本の横断ベンチ） → https://sumitsuke.jp/lab/
 - 受託（生成 AI コード・外注コードの点検と修理・テキスト完結） → https://sumitsuke.jp/works/repair/
+
+## License
+
+Code: MIT (see `LICENSE`). Data, tables and figures: CC BY 4.0 (see `DATA_LICENSE`) — please credit **Sumitsuke Lab** (https://sumitsuke.jp/lab/).
