@@ -18,6 +18,7 @@ Usage:
     python -m harness.bench --db supabase --tune --ef 200 --no-teardown
     python -m harness.bench --db qdrant --limit 100        # quick smoke test
 """
+
 from __future__ import annotations
 
 import argparse
@@ -37,30 +38,55 @@ from harness import config, dataset, latency, metrics, runio
 JST = timezone(timedelta(hours=9))
 
 SUMMARY_FIELDS = [
-    "timestamp_jst", "db", "variant", "region", "upsert_strategy",
-    "n_queries", "dim", "topk", "fetch_k",
-    "upsert_s", "upsert_copy_s", "upsert_index_s", "upsert_tps",
-    "ndcg10", "recall10", "ann_recall10", "short_queries",
-    "e2e_p50_ms", "e2e_p95_ms", "e2e_mean_ms",
-    "e2e_pq_p50_ms", "e2e_pq_p95_ms",          # per-query-median view (less jitter)
-    "server_p50_ms", "server_p95_ms", "server_n",
-    "rows", "total_bytes", "index_bytes",
-    "ef", "note",
+    "timestamp_jst",
+    "db",
+    "variant",
+    "region",
+    "upsert_strategy",
+    "n_queries",
+    "dim",
+    "topk",
+    "fetch_k",
+    "upsert_s",
+    "upsert_copy_s",
+    "upsert_index_s",
+    "upsert_tps",
+    "ndcg10",
+    "recall10",
+    "ann_recall10",
+    "short_queries",
+    "e2e_p50_ms",
+    "e2e_p95_ms",
+    "e2e_mean_ms",
+    "e2e_pq_p50_ms",
+    "e2e_pq_p95_ms",  # per-query-median view (less jitter)
+    "server_p50_ms",
+    "server_p95_ms",
+    "server_n",
+    "rows",
+    "total_bytes",
+    "index_bytes",
+    "ef",
+    "note",
 ]
 
 
 def make_adapter(name: str):
     if name == "qdrant":
         from harness.adapters.qdrant_store import QdrantStore
+
         return QdrantStore()
     if name in ("supabase", "pgvector"):
         from harness.adapters.pgvector_store import PgvectorStore
+
         return PgvectorStore()
     if name in ("turso", "libsql"):
         from harness.adapters.turso_store import TursoStore
+
         return TursoStore()
     if name in ("cloudflare", "cf", "vectorize"):
         from harness.adapters.cloudflare_store import CloudflareStore
+
         return CloudflareStore()
     raise ValueError(f"unknown db: {name}")
 
@@ -113,15 +139,15 @@ def sampled_server_ms(adapter, query_vecs, query_ids, sample=100):
     return out
 
 
-def run_one(name, variant, corpus_vecs, corpus_ids, query_vecs, query_ids,
-            qrels, exact, args):
+def run_one(name, variant, corpus_vecs, corpus_ids, query_vecs, query_ids, qrels, exact, args):
     print(f"\n=== {name} [{variant}] ===")
     adapter = make_adapter(name)
     if not getattr(adapter, "region", ""):
         # region is an auxiliary structured column (same-region control); warn at
         # run time so a blank cell is visible now, not discovered later in the CSV.
-        print(f"[warn] {name}: region blank (endpoint carries no AWS region token) "
-              f"-> summary.csv 'region' will be empty")
+        print(
+            f"[warn] {name}: region blank (endpoint carries no AWS region token) -> summary.csv 'region' will be empty"
+        )
 
     # tuning knobs
     ef = None
@@ -186,23 +212,36 @@ def run_one(name, variant, corpus_vecs, corpus_ids, query_vecs, query_ids,
         sv = latency.summarize(server_ms)
         print(f"[task]  nDCG@10={tm['ndcg']:.4f} Recall@10={tm['recall']:.4f}")
         print(f"[ann ]  ANN Recall@10={ar['ann_recall']:.4f} (vs exact ceiling)")
-        print(f"[e2e ]  pooled p50={e2e['p50']:.1f} p95={e2e['p95']:.1f} | per-query-median p50={pq['p50']:.1f} p95={pq['p95']:.1f} ms")
-        print(f"[srv ]  p50={sv['p50']:.1f}ms p95={sv['p95']:.1f}ms (n={sv['n']}, sampled separate path, NOT cross-DB comparable)")
+        print(
+            f"[e2e ]  pooled p50={e2e['p50']:.1f} p95={e2e['p95']:.1f} | per-query-median p50={pq['p50']:.1f} p95={pq['p95']:.1f} ms"
+        )
+        print(
+            f"[srv ]  p50={sv['p50']:.1f}ms p95={sv['p95']:.1f}ms (n={sv['n']}, sampled separate path, NOT cross-DB comparable)"
+        )
 
         row = {
             "timestamp_jst": datetime.now(JST).strftime("%Y-%m-%d %H:%M:%S"),
-            "db": name, "variant": variant,
+            "db": name,
+            "variant": variant,
             "region": getattr(adapter, "region", ""),
             "upsert_strategy": getattr(adapter, "upsert_strategy", ""),
-            "n_queries": len(q_ids), "dim": config.DIM, "topk": config.TOP_K,
+            "n_queries": len(q_ids),
+            "dim": config.DIM,
+            "topk": config.TOP_K,
             "fetch_k": config.FETCH_K,
-            "upsert_s": f"{upsert_s:.2f}", "upsert_copy_s": copy_s, "upsert_index_s": index_s,
+            "upsert_s": f"{upsert_s:.2f}",
+            "upsert_copy_s": copy_s,
+            "upsert_index_s": index_s,
             "upsert_tps": f"{tps:.1f}",
-            "ndcg10": f"{tm['ndcg']:.4f}", "recall10": f"{tm['recall']:.4f}",
-            "ann_recall10": f"{ar['ann_recall']:.4f}", "short_queries": short,
-            "e2e_p50_ms": f"{e2e['p50']:.2f}", "e2e_p95_ms": f"{e2e['p95']:.2f}",
+            "ndcg10": f"{tm['ndcg']:.4f}",
+            "recall10": f"{tm['recall']:.4f}",
+            "ann_recall10": f"{ar['ann_recall']:.4f}",
+            "short_queries": short,
+            "e2e_p50_ms": f"{e2e['p50']:.2f}",
+            "e2e_p95_ms": f"{e2e['p95']:.2f}",
             "e2e_mean_ms": f"{e2e['mean']:.2f}",
-            "e2e_pq_p50_ms": f"{pq['p50']:.2f}", "e2e_pq_p95_ms": f"{pq['p95']:.2f}",
+            "e2e_pq_p50_ms": f"{pq['p50']:.2f}",
+            "e2e_pq_p95_ms": f"{pq['p95']:.2f}",
             "server_p50_ms": f"{sv['p50']:.2f}" if sv["n"] else "",
             "server_p95_ms": f"{sv['p95']:.2f}" if sv["n"] else "",
             "server_n": sv["n"],
@@ -247,12 +286,23 @@ def write_metadata(args, rows):
     meta = {
         "timestamp_jst": datetime.now(JST).strftime("%Y-%m-%d %H:%M:%S"),
         "note_region_network": args.note,
-        "args": {"db": args.db, "repeats": args.repeats, "warmup": args.warmup,
-                 "limit": args.limit, "tune": args.tune, "ef": args.ef},
-        "config": {"dataset": config.DATASET, "model": config.MODEL_NAME,
-                   "dim": config.DIM, "max_seq_len": config.MAX_SEQ_LEN,
-                   "metric": config.METRIC, "top_k": config.TOP_K,
-                   "fetch_k": config.FETCH_K},
+        "args": {
+            "db": args.db,
+            "repeats": args.repeats,
+            "warmup": args.warmup,
+            "limit": args.limit,
+            "tune": args.tune,
+            "ef": args.ef,
+        },
+        "config": {
+            "dataset": config.DATASET,
+            "model": config.MODEL_NAME,
+            "dim": config.DIM,
+            "max_seq_len": config.MAX_SEQ_LEN,
+            "metric": config.METRIC,
+            "top_k": config.TOP_K,
+            "fetch_k": config.FETCH_K,
+        },
         "env": {"platform": platform.platform(), "python": sys.version.split()[0]},
         "dbs_run": [r["db"] for r in rows],
     }
@@ -278,18 +328,16 @@ def main() -> int:
     dbs = ["qdrant", "supabase", "turso"] if args.db == "all" else [args.db]
     variant = "tuned" if args.tune else "default"
 
-    (corpus_vecs, corpus_ids, query_vecs, query_ids,
-     qrels, exact) = load_artifacts()
-    print(f"[load] corpus {corpus_vecs.shape} queries {query_vecs.shape} "
-          f"exact-ceiling queries={len(exact)}")
+    (corpus_vecs, corpus_ids, query_vecs, query_ids, qrels, exact) = load_artifacts()
+    print(f"[load] corpus {corpus_vecs.shape} queries {query_vecs.shape} exact-ceiling queries={len(exact)}")
 
     rows = []
     for name in dbs:
         try:
-            rows.append(run_one(name, variant, corpus_vecs, corpus_ids,
-                                query_vecs, query_ids, qrels, exact, args))
+            rows.append(run_one(name, variant, corpus_vecs, corpus_ids, query_vecs, query_ids, qrels, exact, args))
         except Exception as e:
             import traceback
+
             print(f"[error] {name} failed: {e}")
             traceback.print_exc()
 

@@ -4,6 +4,7 @@ A run is {query_id: [(doc_id, score), ...]} ordered best-first. Persisting the
 raw id/score/rank (DoD: results must be recomputable) lets us re-derive every
 metric without re-querying a DB. CSV columns: query_id, rank, doc_id, score.
 """
+
 from __future__ import annotations
 
 import csv
@@ -50,8 +51,6 @@ def load_run(name: str) -> Run:
     with open(run_path(name), encoding="utf-8") as f:
         r = csv.DictReader(f)
         for row in r:
-            run.setdefault(row["query_id"], []).append(
-                (row["doc_id"], float(row["score"]))
-            )
+            run.setdefault(row["query_id"], []).append((row["doc_id"], float(row["score"])))
     # ensure best-first by rank (file is already ordered, but be safe)
     return run

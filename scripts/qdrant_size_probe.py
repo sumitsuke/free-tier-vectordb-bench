@@ -19,9 +19,9 @@ attributable — reported only as an order-of-magnitude footnote).
 
     PYTHONIOENCODING=utf-8 ./.venv/Scripts/python.exe -m scripts.qdrant_size_probe
 """
+
 from __future__ import annotations
 
-import json
 import os
 import re
 
@@ -101,8 +101,10 @@ def main() -> None:
         )
         batch = 256
         for i in range(0, n, batch):
-            pts = [PointStruct(id=j, vector=vecs[j].tolist(), payload={"doc_id": str(j)})
-                   for j in range(i, min(i + batch, n))]
+            pts = [
+                PointStruct(id=j, vector=vecs[j].tolist(), payload={"doc_id": str(j)})
+                for j in range(i, min(i + batch, n))
+            ]
             client.upsert(collection_name=COLL, points=pts, wait=True)
         out(f"upserted {n} vectors into live collection\n")
         rss_after = resident_bytes()
@@ -110,14 +112,15 @@ def main() -> None:
         # 1. client CollectionInfo — ALL fields
         out("== 1. client.get_collection() — every field ==")
         info = client.get_collection(COLL)
-        fields = list(getattr(info, "model_fields", {}) or
-                      {f: None for f in dir(info) if not f.startswith("_")})
+        fields = list(getattr(info, "model_fields", {}) or {f: None for f in dir(info) if not f.startswith("_")})
         out(f"   CollectionInfo fields ({len(fields)}): {fields}")
         byteish = [f for f in fields if re.search(r"byte|disk|ram|size|memory", f, re.I)]
         out(f"   byte-ish fields: {byteish or 'NONE'}")
-        out(f"   points_count={getattr(info,'points_count',None)} "
-            f"segments_count={getattr(info,'segments_count',None)} "
-            f"indexed_vectors_count={getattr(info,'indexed_vectors_count',None)}")
+        out(
+            f"   points_count={getattr(info, 'points_count', None)} "
+            f"segments_count={getattr(info, 'segments_count', None)} "
+            f"indexed_vectors_count={getattr(info, 'indexed_vectors_count', None)}"
+        )
 
         # 2. raw /collections json
         out("\n== 2. GET /collections/{name} (raw json) ==")
@@ -133,8 +136,10 @@ def main() -> None:
         if code == 200:
             res = r.json().get("result", {})
             colls = (res.get("collections") or {}).get("collections")
-            out(f"   collections.collections present: {colls is not None}, "
-                f"count={len(colls) if isinstance(colls, list) else 'n/a'}")
+            out(
+                f"   collections.collections present: {colls is not None}, "
+                f"count={len(colls) if isinstance(colls, list) else 'n/a'}"
+            )
             if colls:
                 ck = byte_keys(colls[0], ".collections[0]")
                 out(f"   per-collection byte-ish keys: {ck or 'NONE'}")
@@ -146,19 +151,24 @@ def main() -> None:
         code, r = get("/metrics")
         out(f"   status {code}")
         if code == 200:
-            bl = [ln for ln in r.text.splitlines()
-                  if re.search(r"byte|disk|ram|memory", ln, re.I) and not ln.startswith("#")]
+            bl = [
+                ln
+                for ln in r.text.splitlines()
+                if re.search(r"byte|disk|ram|memory", ln, re.I) and not ln.startswith("#")
+            ]
             out(f"   *_bytes lines ({len(bl)}): {bl[:12]}")
 
         # node RSS delta (node-level only)
         if rss_before is not None and rss_after is not None:
-            out(f"\n== node resident_bytes delta (node-level, NOT collection-attributable) ==")
-            out(f"   before={rss_before:,} after={rss_after:,} delta={rss_after-rss_before:,} bytes")
+            out("\n== node resident_bytes delta (node-level, NOT collection-attributable) ==")
+            out(f"   before={rss_before:,} after={rss_after:,} delta={rss_after - rss_before:,} bytes")
 
         out("\n== CONCLUSION ==")
-        out("   A per-collection BYTE total was found on a surface: "
+        out(
+            "   A per-collection BYTE total was found on a surface: "
             "see byte-ish results above. If all four are NONE for collection scope, "
-            "Qdrant exposes no per-collection size even on a LIVE, populated collection.")
+            "Qdrant exposes no per-collection size even on a LIVE, populated collection."
+        )
     finally:
         try:
             client.delete_collection(COLL)

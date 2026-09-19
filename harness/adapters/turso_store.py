@@ -19,6 +19,7 @@ Notes:
 - No cheap server-side timing (no EXPLAIN ANALYZE equiv over the client) ->
   sample_server_ms returns None; Turso reports e2e only (honest, per §5-1).
 """
+
 from __future__ import annotations
 
 import os
@@ -50,7 +51,7 @@ class TursoStore(VectorStore):
         # libsql_client wants ws/wss/http/https; map libsql:// -> https (HTTP hrana)
         url = self.url
         if url.startswith("libsql://"):
-            url = "https://" + url[len("libsql://"):]
+            url = "https://" + url[len("libsql://") :]
         self.client = create_client_sync(url=url, auth_token=self.auth)
         self.upsert_breakdown: dict | None = None
 
@@ -58,14 +59,12 @@ class TursoStore(VectorStore):
         if metric != "cosine":
             raise ValueError(f"this bench is cosine-only, got {metric}")
         self.client.execute(f"DROP TABLE IF EXISTS {self.table}")
-        self.client.execute(
-            f"CREATE TABLE {self.table} (id TEXT PRIMARY KEY, "
-            f"embedding F32_BLOB({dim}))"
-        )
+        self.client.execute(f"CREATE TABLE {self.table} (id TEXT PRIMARY KEY, embedding F32_BLOB({dim}))")
 
     def _exec_retry(self, fn, tries: int = 5):
         """Turso Cloud throws transient 502/503 under load; retry with backoff."""
         import time
+
         last = None
         for a in range(tries):
             try:
@@ -76,9 +75,13 @@ class TursoStore(VectorStore):
                 # generic SERVER_ERROR/stream resets, and a sporadic DiskANN
                 # "failed to insert shadow row" (recovers on retry). Substring match
                 # is fragile (see AUDIT) but libsql_client doesn't expose codes here.
-                transient = ("502" in msg or "503" in msg or "SERVER_ERROR" in msg
-                             or "stream" in msg.lower()
-                             or "failed to insert shadow row" in msg)
+                transient = (
+                    "502" in msg
+                    or "503" in msg
+                    or "SERVER_ERROR" in msg
+                    or "stream" in msg.lower()
+                    or "failed to insert shadow row" in msg
+                )
                 last = e
                 if a == tries - 1 or not transient:
                     raise
@@ -98,10 +101,11 @@ class TursoStore(VectorStore):
         # IF NOT EXISTS makes the retry idempotent: if a 502 fires AFTER the server
         # actually created the index, the retry must not die on "already exists".
         t1 = time.perf_counter()
-        self._exec_retry(lambda: self.client.execute(
-            f"CREATE INDEX IF NOT EXISTS {self.index} ON {self.table} "
-            f"(libsql_vector_idx(embedding))"
-        ))
+        self._exec_retry(
+            lambda: self.client.execute(
+                f"CREATE INDEX IF NOT EXISTS {self.index} ON {self.table} (libsql_vector_idx(embedding))"
+            )
+        )
         index_s = time.perf_counter() - t1
 
         batch = 256
@@ -113,8 +117,7 @@ class TursoStore(VectorStore):
                     # OR REPLACE keeps a retried batch idempotent: if a batch partly
                     # applied before a transient error, the retry must not hit a
                     # PRIMARY KEY conflict on the already-inserted ids.
-                    f"INSERT OR REPLACE INTO {self.table} (id, embedding) "
-                    f"VALUES (?, vector32(?))",
+                    f"INSERT OR REPLACE INTO {self.table} (id, embedding) VALUES (?, vector32(?))",
                     [ids[j], _vec_literal(vecs[j])],
                 )
                 for j in range(i, min(i + batch, n))
@@ -148,13 +151,10 @@ class TursoStore(VectorStore):
         # This gives index_bytes for parity with pgvector and grounds the bloat ratio.
         out: dict = {"rows": rows, "total_bytes": None, "index_bytes": None}
         try:
-            rs = self.client.execute(
-                "SELECT name, SUM(pgsize) AS b FROM dbstat GROUP BY name"
-            )
+            rs = self.client.execute("SELECT name, SUM(pgsize) AS b FROM dbstat GROUP BY name")
             sizes = {row["name"]: (row["b"] or 0) for row in rs.rows}
             total = sum(sizes.values())
-            idx = sum(b for n, b in sizes.items()
-                      if n.startswith(self.index) or n.startswith("libsql_vector_meta"))
+            idx = sum(b for n, b in sizes.items() if n.startswith(self.index) or n.startswith("libsql_vector_meta"))
             out["total_bytes"] = total
             out["index_bytes"] = idx
             out["table_bytes"] = total - idx

@@ -8,6 +8,7 @@ Steps: report sizes (dbstat) -> try VACUUM (is it even supported on Turso?) ->
 DROP the vector index -> sizes -> VACUUM -> sizes. Finally DROP TABLE (cleanup).
 All sizes via dbstat (pragma_page_count is a useless constant on Turso Cloud).
 """
+
 from __future__ import annotations
 
 from dotenv import load_dotenv
@@ -25,8 +26,7 @@ def show(s: TursoStore, label: str) -> None:
     if tot is not None:
         print(f"   total={tot:,}  index={idx:,}  table={tbl:,} bytes")
         if idx:
-            print(f"   index/raw-vectors = {idx / RAW_VEC_BYTES:.1f}x  "
-                  f"(raw={RAW_VEC_BYTES:,})")
+            print(f"   index/raw-vectors = {idx / RAW_VEC_BYTES:.1f}x  (raw={RAW_VEC_BYTES:,})")
             print(f"   index/table       = {idx / tbl:.1f}x")
     else:
         print(f"   stats: {st}")

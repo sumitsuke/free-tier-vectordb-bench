@@ -8,6 +8,7 @@ nDCG/Recall the embedding can reach), since exact search has no ANN error.
 Usage:
     python -m harness.exact_knn
 """
+
 from __future__ import annotations
 
 import time
@@ -41,22 +42,22 @@ def main() -> int:
     t0 = time.perf_counter()
     raw = exact_topk(query_vecs, corpus_vecs, corpus_ids, query_ids, config.FETCH_K)
     dt = time.perf_counter() - t0
-    print(f"[exact] brute-force top-{config.FETCH_K} for {len(query_ids):,} queries "
-          f"in {dt:.2f}s")
+    print(f"[exact] brute-force top-{config.FETCH_K} for {len(query_ids):,} queries in {dt:.2f}s")
 
     # diagnostic: how often is the query's own doc the #1 raw hit? (why we exclude)
     self_top1 = sum(1 for qid, hits in raw.items() if hits and hits[0][0] == qid)
-    print(f"[self-match] query's own doc is raw #1 for {self_top1}/{len(raw)} queries "
-          f"-> excluded before scoring")
+    print(f"[self-match] query's own doc is raw #1 for {self_top1}/{len(raw)} queries -> excluded before scoring")
 
     run = metrics.truncate(metrics.exclude_self(raw), config.TOP_K)
     path = runio.save_run("exact", run)
     print(f"[save] {path.name}")
 
     tm = metrics.task_metrics(run, qrels, k=config.TOP_K)
-    print(f"[ceiling] exact search is the ANN-Recall@10 ceiling (= 1.0 by definition).")
-    print(f"[ref]     task quality of exact top-10 vs qrels: "
-          f"nDCG@10={tm['ndcg']:.4f}  Recall@10={tm['recall']:.4f} (n={tm['n']})")
+    print("[ceiling] exact search is the ANN-Recall@10 ceiling (= 1.0 by definition).")
+    print(
+        f"[ref]     task quality of exact top-10 vs qrels: "
+        f"nDCG@10={tm['ndcg']:.4f}  Recall@10={tm['recall']:.4f} (n={tm['n']})"
+    )
     print("          ^ this is a REFERENCE, not an upper bound on task quality: a DB's")
     print("            approximate top-10 can score slightly HIGHER on qrels when a tie")
     print("            at the rank-10 boundary swaps a relevant doc in (seen: +<=0.0014).")

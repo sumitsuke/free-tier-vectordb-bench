@@ -14,6 +14,7 @@ Two collections, both with the real 8,674 ArguAna vectors:
 
     PYTHONIOENCODING=utf-8 ./.venv/Scripts/python.exe -m scripts.qdrant_index_probe
 """
+
 from __future__ import annotations
 
 import os
@@ -49,7 +50,7 @@ def seg_sizes(name):
         for sh in shards:
             loc = sh.get("local") or {}
             vec += loc.get("vectors_size_bytes", 0) or 0
-            for seg in (loc.get("segments") or []):
+            for seg in loc.get("segments") or []:
                 info = seg.get("info") or {}
                 ram += info.get("ram_usage_bytes", 0) or 0
                 disk += info.get("disk_usage_bytes", 0) or 0
@@ -60,6 +61,7 @@ def seg_sizes(name):
 
 def make(client, name, vecs, threshold):
     from qdrant_client.models import Distance, OptimizersConfigDiff, PointStruct, VectorParams
+
     try:
         client.delete_collection(name)
     except Exception:
@@ -67,12 +69,12 @@ def make(client, name, vecs, threshold):
     kw = {}
     if threshold is not None:
         kw["optimizers_config"] = OptimizersConfigDiff(indexing_threshold=threshold)
-    client.create_collection(name, vectors_config=VectorParams(size=vecs.shape[1],
-                                                               distance=Distance.COSINE), **kw)
+    client.create_collection(name, vectors_config=VectorParams(size=vecs.shape[1], distance=Distance.COSINE), **kw)
     n = len(vecs)
     for i in range(0, n, 256):
-        pts = [PointStruct(id=j, vector=vecs[j].tolist(), payload={"doc_id": str(j)})
-               for j in range(i, min(i + 256, n))]
+        pts = [
+            PointStruct(id=j, vector=vecs[j].tolist(), payload={"doc_id": str(j)}) for j in range(i, min(i + 256, n))
+        ]
         client.upsert(name, points=pts, wait=True)
 
 
@@ -94,6 +96,7 @@ def wait_indexed(client, name, want, secs):
 
 def main():
     from qdrant_client import QdrantClient
+
     client = QdrantClient(url=URL, api_key=KEY, timeout=120)
     vecs = np.load(config.CORPUS_VECS_NPY)
     want = len(vecs)
@@ -109,26 +112,30 @@ def main():
         thr = getattr(oc, "indexing_threshold", None)
         out(f"   indexing_threshold (default) = {thr}")
         info = wait_indexed(client, A, want, secs=60)
-        out(f"   FINAL: points={info.points_count} indexed={info.indexed_vectors_count} "
-            f"segments={info.segments_count}")
+        out(f"   FINAL: points={info.points_count} indexed={info.indexed_vectors_count} segments={info.segments_count}")
         brute = (info.indexed_vectors_count or 0) == 0
-        out(f"   => {'BRUTE-FORCE (no HNSW built; ANN Recall is exact-by-construction)' if brute else 'HNSW BUILT'}"
-            f"  [threshold={thr}, segment≈{want//max(1,info.segments_count)} < {thr}]")
+        out(
+            f"   => {'BRUTE-FORCE (no HNSW built; ANN Recall is exact-by-construction)' if brute else 'HNSW BUILT'}"
+            f"  [threshold={thr}, segment≈{want // max(1, info.segments_count)} < {thr}]"
+        )
         out(f"   sizes (default): {seg_sizes(A)}")
 
         # --- B) force HNSW (indexing_threshold=1) ---
         out("\n== B) indexing_threshold=1 (force HNSW) -> complete footprint ==")
         make(client, B, vecs, threshold=1)
         info = wait_indexed(client, B, want, secs=180)
-        out(f"   FINAL: points={info.points_count} indexed={info.indexed_vectors_count} "
-            f"segments={info.segments_count} status={info.status}")
+        out(
+            f"   FINAL: points={info.points_count} indexed={info.indexed_vectors_count} "
+            f"segments={info.segments_count} status={info.status}"
+        )
         sz = seg_sizes(B)
         out(f"   sizes WITH HNSW: {sz}")
         if sz.get("vectors_size_bytes"):
             raw = want * vecs.shape[1] * 4
-            tot = sz["vectors_size_bytes"] + sz.get("ram_usage_bytes", 0) + sz.get("disk_usage_bytes", 0)
-            out(f"   raw vectors={raw:,}  vectors_size={sz['vectors_size_bytes']:,}  "
-                f"ram={sz.get('ram_usage_bytes',0):,}  disk={sz.get('disk_usage_bytes',0):,}")
+            out(
+                f"   raw vectors={raw:,}  vectors_size={sz['vectors_size_bytes']:,}  "
+                f"ram={sz.get('ram_usage_bytes', 0):,}  disk={sz.get('disk_usage_bytes', 0):,}"
+            )
     finally:
         for nm in (A, B):
             try:

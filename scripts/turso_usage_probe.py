@@ -10,6 +10,7 @@ this file if present and falls back to its built-in constants otherwise (so the
 report still regenerates offline). The Platform token (TURSO_PLATFORM_TOKEN) is
 management-scoped and only used here, never by the benchmark harness.
 """
+
 from __future__ import annotations
 
 import json
@@ -36,7 +37,8 @@ def main() -> None:
     # date is not derivable in-script (no clock); pass via env to stamp the artifact.
     record = {
         "fetched_at": os.environ.get("TURSO_USAGE_DATE", ""),
-        "org": ORG, "database": DB,
+        "org": ORG,
+        "database": DB,
         "rows_read": total.get("rows_read"),
         "rows_written": total.get("rows_written"),
         "storage_bytes": total.get("storage_bytes"),

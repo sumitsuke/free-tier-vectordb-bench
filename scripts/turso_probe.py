@@ -6,6 +6,7 @@ BEFORE running the full bench. Run:
 
     PYTHONIOENCODING=utf-8 ./.venv/Scripts/python.exe -m scripts.turso_probe
 """
+
 from __future__ import annotations
 
 import numpy as np

@@ -9,6 +9,7 @@ Contract notes that keep the comparison fair:
 - `stats` returns whatever free-tier meter the DB exposes (size, rows, dims...),
   recorded as the "before/after" diff for the consumption table (PLAN §8).
 """
+
 from __future__ import annotations
 
 import re
@@ -18,18 +19,22 @@ from abc import ABC, abstractmethod
 # same-region control (Supabase vs Turso both ap-northeast-1) is machine-checkable
 # from summary.csv instead of being buried in the free-text --note.
 _AWS_CITY = {
-    "ap-northeast-1": "Tokyo", "us-west-2": "Oregon", "us-east-1": "N.Virginia",
-    "us-east-2": "Ohio", "us-west-1": "N.California", "eu-central-1": "Frankfurt",
-    "eu-west-1": "Ireland", "eu-west-2": "London", "sa-east-1": "SaoPaulo",
+    "ap-northeast-1": "Tokyo",
+    "us-west-2": "Oregon",
+    "us-east-1": "N.Virginia",
+    "us-east-2": "Ohio",
+    "us-west-1": "N.California",
+    "eu-central-1": "Frankfurt",
+    "eu-west-1": "Ireland",
+    "eu-west-2": "London",
+    "sa-east-1": "SaoPaulo",
 }
 
 
 # Anchor to the real AWS region prefixes + token boundaries so we don't grab a
 # mid-token run (old r"[a-z]{2}-[a-z]+-\d" matched 'oo-bar-1' inside 'foo-bar-1').
 # \d+ (not \d) so 2-digit suffixes aren't truncated; lookarounds = token boundary.
-_AWS_REGION_RE = re.compile(
-    r"(?<![a-z0-9])(?:af|ap|ca|eu|il|me|sa|us)-[a-z]+-\d+(?![0-9a-z])"
-)
+_AWS_REGION_RE = re.compile(r"(?<![a-z0-9])(?:af|ap|ca|eu|il|me|sa|us)-[a-z]+-\d+(?![0-9a-z])")
 
 
 def aws_region_label(endpoint: str | None) -> str:

@@ -19,13 +19,13 @@ Notes / gotchas (why this adapter looks different):
   stored_dims = vectorCount * dim (CF bills/limits on dimensions, not bytes).
 - Region is global/edge (no single AWS region) -> region label is "global (edge)".
 """
+
 from __future__ import annotations
 
 import json
 import os
 import time
 
-import numpy as np
 
 from harness.adapters.base import VectorStore
 
@@ -40,15 +40,14 @@ class CloudflareStore(VectorStore):
         self.account = os.environ["CF_ACCOUNT_ID"]
         self.token = os.environ["CF_API_TOKEN"]
         self.index = os.environ.get("CF_VECTORIZE_INDEX", "arguana-minilm")
-        self.base = (f"https://api.cloudflare.com/client/v4/accounts/{self.account}"
-                     f"/vectorize/v2/indexes")
+        self.base = f"https://api.cloudflare.com/client/v4/accounts/{self.account}/vectorize/v2/indexes"
         self.h = {"Authorization": f"Bearer {self.token}"}
         self.upsert_breakdown: dict | None = None
 
     # --- HTTP helper with transient retry (429/5xx/gateway) ---
-    def _req(self, method: str, path: str = "", *, json_body=None, data=None,
-             ctype: str | None = None, tries: int = 5):
+    def _req(self, method: str, path: str = "", *, json_body=None, data=None, ctype: str | None = None, tries: int = 5):
         import requests
+
         url = self.base + path
         headers = dict(self.h)
         if ctype:
@@ -56,8 +55,7 @@ class CloudflareStore(VectorStore):
         last = None
         for a in range(tries):
             try:
-                r = requests.request(method, url, headers=headers, json=json_body,
-                                     data=data, timeout=120)
+                r = requests.request(method, url, headers=headers, json=json_body, data=data, timeout=120)
                 if r.status_code in (429, 500, 502, 503, 504):
                     raise RuntimeError(f"transient {r.status_code}: {r.text[:200]}")
                 return r
@@ -89,10 +87,14 @@ class CloudflareStore(VectorStore):
         info = self._req("GET", f"/{self.index}/info")
         if info.status_code == 200:
             return  # exists with our dim/cosine config -> reuse as-is
-        r = self._req("POST", "", json_body={
-            "name": self.index,
-            "config": {"dimensions": dim, "metric": "cosine"},
-        })
+        r = self._req(
+            "POST",
+            "",
+            json_body={
+                "name": self.index,
+                "config": {"dimensions": dim, "metric": "cosine"},
+            },
+        )
         body = r.json() if r.content else {}
         errs = str(body.get("errors", ""))
         if not body.get("success") and "already exists" not in errs.lower():
@@ -115,8 +117,7 @@ class CloudflareStore(VectorStore):
             for j in range(i, min(i + batch, n)):
                 lines.append(json.dumps({"id": str(ids[j]), "values": vecs[j].tolist()}))
             ndjson = "\n".join(lines)
-            r = self._req("POST", f"/{self.index}/upsert", data=ndjson.encode("utf-8"),
-                          ctype="application/x-ndjson")
+            r = self._req("POST", f"/{self.index}/upsert", data=ndjson.encode("utf-8"), ctype="application/x-ndjson")
             res = self._ok(r)
             last_mutation = res.get("mutationId") or last_mutation
         copy_s = time.perf_counter() - t0
@@ -148,16 +149,21 @@ class CloudflareStore(VectorStore):
         if not ok:
             raise RuntimeError(
                 f"Vectorize indexing did not catch up: vectorCount={cnt}/{want} "
-                f"after {index_s:.0f}s — refusing to query a partial index")
+                f"after {index_s:.0f}s — refusing to query a partial index"
+            )
         self.upsert_breakdown = {"copy_s": round(copy_s, 3), "index_s": round(index_s, 3)}
 
     def search(self, qvec, k: int) -> list[tuple[str, float]]:
-        r = self._req("POST", f"/{self.index}/query", json_body={
-            "vector": qvec.tolist(),
-            "topK": k,
-            "returnValues": False,
-            "returnMetadata": "none",
-        })
+        r = self._req(
+            "POST",
+            f"/{self.index}/query",
+            json_body={
+                "vector": qvec.tolist(),
+                "topK": k,
+                "returnValues": False,
+                "returnMetadata": "none",
+            },
+        )
         res = self._ok(r)
         return [(m["id"], float(m["score"])) for m in res.get("matches", [])]
 

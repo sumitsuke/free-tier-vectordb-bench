@@ -11,11 +11,11 @@ EXTRAPOLATION beyond the tested range and is labeled as such in the verdict.
 
     PYTHONIOENCODING=utf-8 ./.venv/Scripts/python.exe -m scripts.scale_sweep
 """
+
 from __future__ import annotations
 
 import csv
 import time
-from pathlib import Path
 
 import faiss
 import numpy as np
@@ -30,9 +30,9 @@ TOP_K = 10
 # and a higher value to see if any scale needs more ef to stay at the ceiling.
 HNSW_M = 16
 HNSW_EFC = 200
-EF_SEARCH = [16, 64]          # 16 = faiss default; 64 ≈ a modest bump
-N_GRID = [8674, 25000, 50000] # + the full corpus, appended at runtime
-QUERY_SAMPLE = 2000           # cap queries for stable, fast recall stats
+EF_SEARCH = [16, 64]  # 16 = faiss default; 64 ≈ a modest bump
+N_GRID = [8674, 25000, 50000]  # + the full corpus, appended at runtime
+QUERY_SAMPLE = 2000  # cap queries for stable, fast recall stats
 
 
 def exact_top_k(corpus: np.ndarray, queries: np.ndarray, k: int) -> np.ndarray:
@@ -76,16 +76,22 @@ def main() -> int:
         for ef in EF_SEARCH:
             I, build_s, q_ms = hnsw_top_k(sub, qvecs, TOP_K, ef)
             rec = recall_at_k(I, exact, TOP_K)
-            rows.append({"n": n, "ef_search": ef, "ann_recall10": round(rec, 4),
-                         "build_s": round(build_s, 2), "query_ms": round(q_ms, 3),
-                         "M": HNSW_M, "efc": HNSW_EFC})
-            print(f"  N={n:>6} ef={ef:>3}: ANN Recall@10={rec:.4f} "
-                  f"(build {build_s:.1f}s, {q_ms:.2f} ms/q)")
+            rows.append(
+                {
+                    "n": n,
+                    "ef_search": ef,
+                    "ann_recall10": round(rec, 4),
+                    "build_s": round(build_s, 2),
+                    "query_ms": round(q_ms, 3),
+                    "M": HNSW_M,
+                    "efc": HNSW_EFC,
+                }
+            )
+            print(f"  N={n:>6} ef={ef:>3}: ANN Recall@10={rec:.4f} (build {build_s:.1f}s, {q_ms:.2f} ms/q)")
 
     config.RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     with OUT_CSV.open("w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=["n", "ef_search", "ann_recall10",
-                                          "build_s", "query_ms", "M", "efc"])
+        w = csv.DictWriter(f, fieldnames=["n", "ef_search", "ann_recall10", "build_s", "query_ms", "M", "efc"])
         w.writeheader()
         w.writerows(rows)
     print(f"\n[written] {OUT_CSV}")
@@ -99,7 +105,7 @@ def main() -> int:
     for ef in EF_SEARCH:
         series = [(r["n"], r["ann_recall10"]) for r in rows if r["ef_search"] == ef]
         lo = min(v for _, v in series)
-        trend = " -> ".join(f"{n//1000}k:{v:.3f}" for n, v in series)
+        trend = " -> ".join(f"{n // 1000}k:{v:.3f}" for n, v in series)
         print(f"[ef={ef}] {trend}  (min={lo:.3f})")
     hi = max(EF_SEARCH)
     hi_series = sorted([(r["n"], r["ann_recall10"]) for r in rows if r["ef_search"] == hi])
@@ -109,20 +115,28 @@ def main() -> int:
     # A "threshold/cliff" means recall collapses with scale even at good ef. A few
     # tenths of a percent of graceful drift is NOT a cliff — distinguish them.
     if hi_lo >= 0.95:
-        print(f"[verdict] at ef={hi}: ANN Recall@10 holds {hi_first:.3f}->{hi_last:.3f} "
-              f"(slope {slope*100:.1f}pp) up to N={nmax:,} => NO cliff; gentle, ef-recoverable "
-              f"decline. No scale threshold below {nmax:,} (100k = EXTRAPOLATION, untested).")
+        print(
+            f"[verdict] at ef={hi}: ANN Recall@10 holds {hi_first:.3f}->{hi_last:.3f} "
+            f"(slope {slope * 100:.1f}pp) up to N={nmax:,} => NO cliff; gentle, ef-recoverable "
+            f"decline. No scale threshold below {nmax:,} (100k = EXTRAPOLATION, untested)."
+        )
     elif hi_lo >= 0.90:
-        print(f"[verdict] at ef={hi}: ANN Recall@10 drifts to {hi_lo:.3f} by N={nmax:,} "
-              f"=> soft decline, still no hard cliff (raise ef to recover).")
+        print(
+            f"[verdict] at ef={hi}: ANN Recall@10 drifts to {hi_lo:.3f} by N={nmax:,} "
+            f"=> soft decline, still no hard cliff (raise ef to recover)."
+        )
     else:
-        print(f"[verdict] at ef={hi}: ANN Recall@10 collapses to {hi_lo:.3f} by N={nmax:,} "
-              f"=> SCALE-BOUND cliff (threshold <= {nmax:,}).")
+        print(
+            f"[verdict] at ef={hi}: ANN Recall@10 collapses to {hi_lo:.3f} by N={nmax:,} "
+            f"=> SCALE-BOUND cliff (threshold <= {nmax:,})."
+        )
     lo_series = sorted([(r["n"], r["ann_recall10"]) for r in rows if r["ef_search"] == min(EF_SEARCH)])
     lo_lo = min(v for _, v in lo_series)
-    print(f"[note] ef={min(EF_SEARCH)} (low) runs {lo_series[0][1]:.3f}->{lo_series[-1][1]:.3f} "
-          f"(min={lo_lo:.3f}) => default-ef sensitivity axis: more approximate, "
-          f"ef is the knob (cloud DBs' effective ef sits between these).")
+    print(
+        f"[note] ef={min(EF_SEARCH)} (low) runs {lo_series[0][1]:.3f}->{lo_series[-1][1]:.3f} "
+        f"(min={lo_lo:.3f}) => default-ef sensitivity axis: more approximate, "
+        f"ef is the knob (cloud DBs' effective ef sits between these)."
+    )
     return 0
 
 

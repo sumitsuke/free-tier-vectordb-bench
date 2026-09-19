@@ -9,6 +9,7 @@ Notes:
   hot loop, to feed the e2e-vs-server split (§5-1).
 - stats() reports table + index byte sizes for the consumption table (§8).
 """
+
 from __future__ import annotations
 
 import os
@@ -51,9 +52,7 @@ class PgvectorStore(VectorStore):
         with self.conn.cursor() as cur:
             cur.execute("CREATE EXTENSION IF NOT EXISTS vector")
             cur.execute(f"DROP TABLE IF EXISTS {self.table}")
-            cur.execute(
-                f"CREATE TABLE {self.table} (id text PRIMARY KEY, embedding vector({dim}))"
-            )
+            cur.execute(f"CREATE TABLE {self.table} (id text PRIMARY KEY, embedding vector({dim}))")
 
     def upsert(self, ids, vecs, payloads=None) -> None:
         with self.conn.cursor() as cur:
@@ -67,10 +66,7 @@ class PgvectorStore(VectorStore):
             cur.execute("SET max_parallel_maintenance_workers = 0")
             t1 = time.perf_counter()
             # build HNSW once on the full data (cosine ops)
-            cur.execute(
-                f"CREATE INDEX {self.index} ON {self.table} "
-                f"USING hnsw (embedding vector_cosine_ops)"
-            )
+            cur.execute(f"CREATE INDEX {self.index} ON {self.table} USING hnsw (embedding vector_cosine_ops)")
             index_s = time.perf_counter() - t1
             cur.execute(f"ANALYZE {self.table}")
         # report insert vs index-build separately ("Tursoは挿入が遅い" 等の誤読回避)

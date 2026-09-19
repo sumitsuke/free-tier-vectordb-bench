@@ -8,6 +8,7 @@
 All runs must pass through `exclude_self` first (ArguAna self-match, verified
 in BUILD_LOG: doc_id==query_id is never the gold answer, so dropping it is safe).
 """
+
 from __future__ import annotations
 
 import pytrec_eval
@@ -30,9 +31,7 @@ def _to_pytrec(run: Run) -> dict[str, dict[str, float]]:
 
 def task_metrics(run: Run, qrels: dict[str, dict[str, int]], k: int = 10) -> dict:
     """nDCG@k and Recall@k vs qrels. Returns {'ndcg': mean, 'recall': mean, 'n': N}."""
-    evaluator = pytrec_eval.RelevanceEvaluator(
-        qrels, {f"ndcg_cut.{k}", f"recall.{k}"}
-    )
+    evaluator = pytrec_eval.RelevanceEvaluator(qrels, {f"ndcg_cut.{k}", f"recall.{k}"})
     per_query = evaluator.evaluate(_to_pytrec(run))
     ndcg_key, rec_key = f"ndcg_cut_{k}", f"recall_{k}"
     if not per_query:

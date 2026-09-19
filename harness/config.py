@@ -3,6 +3,7 @@
 These are the *controlled conditions* of the experiment (PLAN §5). Every DB
 adapter reads the same dim / metric / topK so the only variable is the DB.
 """
+
 from __future__ import annotations
 
 from pathlib import Path

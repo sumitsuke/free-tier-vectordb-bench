@@ -11,6 +11,7 @@ Notes:
   read the `time` field from a separate sampled REST call (`sample_server_ms`).
   Verified against the installed client; to be re-confirmed on a live cluster.
 """
+
 from __future__ import annotations
 
 import os
@@ -33,7 +34,7 @@ class QdrantStore(VectorStore):
         self.api_key = os.environ.get("QDRANT_API_KEY") or None
         self.collection = os.environ.get("QDRANT_COLLECTION", "arguana_minilm")
         self.client = QdrantClient(url=self.url, api_key=self.api_key, timeout=120)
-        self.hnsw_ef: int | None = None   # set by orchestrator for tuning runs
+        self.hnsw_ef: int | None = None  # set by orchestrator for tuning runs
         self.exact: bool = False
 
     def create(self, dim: int, metric: str = "cosine") -> None:
@@ -102,7 +103,9 @@ class QdrantStore(VectorStore):
         headers = {"api-key": self.api_key} if self.api_key else {}
         r = requests.post(
             f"{self.url}/collections/{self.collection}/points/query",
-            json=body, headers=headers, timeout=60,
+            json=body,
+            headers=headers,
+            timeout=60,
         )
         r.raise_for_status()
         t = r.json().get("time")

@@ -9,6 +9,7 @@ so the vectors are directly comparable.
 
     PYTHONIOENCODING=utf-8 ./.venv/Scripts/python.exe -m scripts.recon_embed_fiqa
 """
+
 from __future__ import annotations
 
 import json
@@ -32,6 +33,7 @@ QUERY_IDS = FIQA_DIR / "query_ids.npy"
 
 def _download(url, dest):
     import requests
+
     print(f"[download] {url}")
     with requests.get(url, stream=True, timeout=180) as r:
         r.raise_for_status()
@@ -42,7 +44,7 @@ def _download(url, dest):
                 f.write(chunk)
                 done += len(chunk)
                 if total:
-                    print(f"\r[download] {done/1e6:.1f}/{total/1e6:.1f} MB", end="")
+                    print(f"\r[download] {done / 1e6:.1f}/{total / 1e6:.1f} MB", end="")
         print()
 
 
@@ -76,17 +78,28 @@ def main() -> int:
     print(f"[load] FiQA corpus={len(corpus):,} queries={len(queries):,}")
 
     from sentence_transformers import SentenceTransformer
+
     model = SentenceTransformer(config.MODEL_NAME, device="cpu")
     model.max_seq_length = config.MAX_SEQ_LEN
 
     cids = list(corpus.keys())
     qids = list(queries.keys())
     t0 = time.perf_counter()
-    cvecs = model.encode([corpus[i] for i in cids], normalize_embeddings=True,
-                         batch_size=64, show_progress_bar=True, convert_to_numpy=True).astype(np.float32)
-    print(f"[embed] corpus {cvecs.shape} in {time.perf_counter()-t0:.0f}s")
-    qvecs = model.encode([queries[i] for i in qids], normalize_embeddings=True,
-                         batch_size=64, show_progress_bar=True, convert_to_numpy=True).astype(np.float32)
+    cvecs = model.encode(
+        [corpus[i] for i in cids],
+        normalize_embeddings=True,
+        batch_size=64,
+        show_progress_bar=True,
+        convert_to_numpy=True,
+    ).astype(np.float32)
+    print(f"[embed] corpus {cvecs.shape} in {time.perf_counter() - t0:.0f}s")
+    qvecs = model.encode(
+        [queries[i] for i in qids],
+        normalize_embeddings=True,
+        batch_size=64,
+        show_progress_bar=True,
+        convert_to_numpy=True,
+    ).astype(np.float32)
 
     np.save(CORPUS_VECS, cvecs)
     np.save(CORPUS_IDS, np.array(cids, dtype=object))

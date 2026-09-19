@@ -16,6 +16,7 @@ NOT YET IMPLEMENTED (TODO, recorded honestly — RUNBOOK STEP6/7 / PLAN §5-1,§
 - multi-batch variance (CI / boxplot) to show p95 run-to-run stability.
 These land in M3/M5; until then the harness reports single-batch e2e/server only.
 """
+
 from __future__ import annotations
 
 import statistics
@@ -41,8 +42,14 @@ def percentile(values: list[float], p: float) -> float:
 
 def summarize(samples_ms: list[float]) -> dict:
     if not samples_ms:
-        return {"n": 0, "p50": float("nan"), "p95": float("nan"),
-                "mean": float("nan"), "min": float("nan"), "max": float("nan")}
+        return {
+            "n": 0,
+            "p50": float("nan"),
+            "p95": float("nan"),
+            "mean": float("nan"),
+            "min": float("nan"),
+            "max": float("nan"),
+        }
     return {
         "n": len(samples_ms),
         "p50": percentile(samples_ms, 50),

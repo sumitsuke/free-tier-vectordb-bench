@@ -6,6 +6,7 @@ dbstat virtual table is available, per-object page bytes. Run:
 
     PYTHONIOENCODING=utf-8 ./.venv/Scripts/python.exe -m scripts.turso_dbstat_probe
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -35,8 +36,9 @@ try:
 
     print("\n[dbstat per-object pgsize]")
     try:
-        rs = c.execute("SELECT name, SUM(pgsize) AS bytes, COUNT(*) AS pages "
-                       "FROM dbstat GROUP BY name ORDER BY bytes DESC")
+        rs = c.execute(
+            "SELECT name, SUM(pgsize) AS bytes, COUNT(*) AS pages FROM dbstat GROUP BY name ORDER BY bytes DESC"
+        )
         for r in rs.rows:
             print(f"   {r['name']:40} {r['bytes']:>12} bytes  ({r['pages']} pages)")
     except Exception as e:

@@ -5,6 +5,7 @@ BEIR format:
   queries.jsonl  -> {"_id", "text", "metadata"}
   qrels/test.tsv -> header row then: query-id <tab> corpus-id <tab> score
 """
+
 from __future__ import annotations
 
 import json

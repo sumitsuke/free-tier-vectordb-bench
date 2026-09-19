@@ -10,6 +10,7 @@ bench.SUMMARY_FIELDS so future appends stay aligned.
 
     PYTHONIOENCODING=utf-8 ./.venv/Scripts/python.exe -m scripts.migrate_summary_columns
 """
+
 from __future__ import annotations
 
 import csv
@@ -20,10 +21,10 @@ from harness.bench import SUMMARY_FIELDS
 # Provenance per db (matches the adapters' region/upsert_strategy attributes;
 # regions from the recorded endpoints — Qdrant Oregon, Supabase/Turso Tokyo).
 BACKFILL = {
-    "qdrant":   {"region": "us-west-2 (Oregon)",    "upsert_strategy": "batch-upsert (brute-force <10k threshold)"},
+    "qdrant": {"region": "us-west-2 (Oregon)", "upsert_strategy": "batch-upsert (brute-force <10k threshold)"},
     "supabase": {"region": "ap-northeast-1 (Tokyo)", "upsert_strategy": "post-hoc HNSW"},
-    "turso":    {"region": "ap-northeast-1 (Tokyo)", "upsert_strategy": "incremental-on-empty (DiskANN)"},
-    "cf":       {"region": "global (edge)",          "upsert_strategy": "async server-side (Vectorize)"},
+    "turso": {"region": "ap-northeast-1 (Tokyo)", "upsert_strategy": "incremental-on-empty (DiskANN)"},
+    "cf": {"region": "global (edge)", "upsert_strategy": "async server-side (Vectorize)"},
 }
 
 

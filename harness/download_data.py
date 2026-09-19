@@ -7,6 +7,7 @@ reproducibility high (one small dependency-free script).
 Usage:
     python -m harness.download_data
 """
+
 from __future__ import annotations
 
 import sys
@@ -29,7 +30,7 @@ def download(url: str, dest) -> None:
                 done += len(chunk)
                 if total:
                     pct = done * 100 // total
-                    print(f"\r[download] {done/1e6:.1f}/{total/1e6:.1f} MB ({pct}%)", end="")
+                    print(f"\r[download] {done / 1e6:.1f}/{total / 1e6:.1f} MB ({pct}%)", end="")
         print()
 
 

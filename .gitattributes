@@ -1,0 +1,11 @@
+# 2026-09-19: 第三者が受け取るバイト列を固定する（Linux/macOS で sha256sum -c が通るように）。テキストは LF・画像等は binary。
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.woff2 binary

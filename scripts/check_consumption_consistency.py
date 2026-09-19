@@ -11,6 +11,7 @@ Run AFTER scripts.consumption_report; exits non-zero on drift.
 
     PYTHONIOENCODING=utf-8 ./.venv/Scripts/python.exe -m scripts.check_consumption_consistency
 """
+
 from __future__ import annotations
 
 import json
@@ -19,8 +20,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 VALUES = ROOT / "results" / "consumption_values.json"
-REPORT = ROOT / "REPORT.md"          # internal draft (git-ignored); optional
-ARTICLE = ROOT / "ARTICLE.md"        # public canonical
+REPORT = ROOT / "REPORT.md"  # internal draft (git-ignored); optional
+ARTICLE = ROOT / "ARTICLE.md"  # public canonical
 # Tokens consumption.md prints but the article deliberately does not (the article
 # shows the derived 49 runs/month, not the per-evaluation queried dims behind it).
 ARTICLE_EXEMPT = {"3,870,720"}
@@ -35,7 +36,7 @@ def section_2_6(text: str) -> str:
     start = text.find("## 2.6")
     if start < 0:
         return ""
-    rest = text[start + 6:]
+    rest = text[start + 6 :]
     nxt = rest.find("\n## ")
     return rest if nxt < 0 else rest[:nxt]
 
@@ -57,9 +58,11 @@ def main() -> int:
         print("→ update ARTICLE.md (§3 / §7) to match results/consumption.md (regenerate first).")
         return 1
     checked = len(tokens) - len([t for t in tokens if t in ARTICLE_EXEMPT])
-    print(f"[ok] {checked}/{len(tokens)} canonical tokens present in ARTICLE.md "
-          f"({sorted(ARTICLE_EXEMPT)} not printed by the article by design; "
-          f"{ARTICLE_ALIASES} checked in the article's printed form)")
+    print(
+        f"[ok] {checked}/{len(tokens)} canonical tokens present in ARTICLE.md "
+        f"({sorted(ARTICLE_EXEMPT)} not printed by the article by design; "
+        f"{ARTICLE_ALIASES} checked in the article's printed form)"
+    )
     if REPORT.exists():
         sec = section_2_6(REPORT.read_text(encoding="utf-8"))
         miss2 = [t for t in tokens if t not in sec] if sec else tokens
